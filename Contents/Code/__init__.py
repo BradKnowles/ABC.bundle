@@ -103,7 +103,8 @@ def Episodes(title, show_id, season):
 			url = url.replace('abc.go.com', 'abcnews.go.com')
 
 		title = episode.xpath('./div[@class="tile_title"]/a/text()')[0]
-		summary = episode.xpath('./div[@class="tile_desc"]/text()')[0]
+		try: summary = episode.xpath('./div[@class="tile_desc"]/text()')[0]
+		except: summary = ''
 		thumb = episode.xpath('./div[@class="thumb"]/a/img/@src')[0]
 
 		try:
