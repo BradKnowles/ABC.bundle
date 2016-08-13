@@ -1,130 +1,92 @@
-NAME = "ABC"
-BASE_URL = "http://abc.go.com"
-SHOWS = "http://watchabc.go.com/vp2/ws-supt/s/syndication/2000/rss/001/001/-1/-1/-1/-1/-1/-1"
-SEASONS = "http://watchabc.go.com/vp2/s/carousel?service=seasons&parser=VP2_Data_Parser_Seasons&showid=%s&view=season"
-EPISODES = "http://watchabc.go.com/vp2/s/carousel?service=playlists&parser=VP2_Data_Parser_Playlist&postprocess=VP2_Data_Carousel_ProcessPlaylist&showid=%s&seasonid=%s&vidtype=lf&view=showplaylist&playlistid=PL5515994&start=0&size=100&paging=1"
+NAME = 'ABC'
+ART = 'art-default.jpg'
+ICON = 'icon-default.jpg'
 
-RE_SHOW_ID = Regex('/(SH\d+)')
-RE_AIR_DATE = Regex('(?P<month>\d{2})/(?P<day>\d{2})/(?P<year>\d{2})$')
+ALL_SHOWS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1389461?brand=001&device=002&start=0&size=100'
+SHOW_SEASONS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/layout?brand=001&device=002&type=show&show=%s'
+SHOW_EPISODES = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1925878?brand=001&device=002&show=%s&season=%s&start=0&size=50'
+
+HTTP_HEADERS = {
+	'User-Agent': 'ABC/5.0.3(iPad4,4; cpu iPhone OS 9_3_4 like mac os x; en-nl) CFNetwork/758.5.3 Darwin/15.6.0',
+	'appversion': '5.0.0'
+}
+
+RE_SECTION_TITLE = Regex('^season (\d+)$', Regex.IGNORECASE)
 
 ####################################################################################################
 def Start():
 
 	ObjectContainer.title1 = NAME
 	HTTP.CacheTime = CACHE_1HOUR
-	HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'
-	HTTP.Headers['X-Requested-With'] = 'XMLHttpRequest'
 
 ####################################################################################################
-@handler('/video/abc', NAME)
+@handler('/video/abc', NAME, art=ART, thumb=ICON)
 def MainMenu():
 
 	oc = ObjectContainer()
+	json_obj = JSON.ObjectFromURL(ALL_SHOWS, headers=HTTP_HEADERS)
 
-	for show in XML.ElementFromURL(SHOWS).xpath('//item'):
-		title = show.xpath('./title')[0].text.strip()
+	for show in json_obj['tiles']:
 
-		# Exclude certain shows
-		if title in (
-			'A Charlie Brown Christmas',
-			'A Charlie Brown Thanksgiving',
-			'ABC News Specials',
-			'Sandbox'
-		): continue
-
-		description = HTML.ElementFromString(show.xpath('./description')[0].text)
-		summary = description.xpath('.//p')[0].text
-
-		link = show.xpath('./link')[0].text
-		show_id = RE_SHOW_ID.search(link)
-
-		if not show_id:
-			continue
+		title = show['title']
+		id = show['show']['id']
+		thumb = show['images'][0]['value']
 
 		oc.add(DirectoryObject(
-			key = Callback(Season, title=title, show_id=show_id.group(1)),
+			key = Callback(Season, title=title, id=id),
 			title = title,
-			summary = summary
+			thumb = thumb
 		))
 
 	return oc
 
 ####################################################################################################
 @route('/video/abc/season')
-def Season(title, show_id):
+def Season(title, id):
 
 	oc = ObjectContainer(title2=title)
-	html = GetHTML(SEASONS % show_id)
+	json_obj = JSON.ObjectFromURL(SHOW_SEASONS % (id), headers=HTTP_HEADERS)
 
-	for season in html.xpath('//a'):
-		title = season.text
-		season_id = season.get('seasonid')
+	for section in json_obj['modules']:
 
-		if not season_id:
-			season_id = title.rsplit(' ', 1)[1]
+		if 'title' not in section:
+			continue
 
-		oc.add(DirectoryObject(
-			key = Callback(Episodes, title=title, show_id=show_id, season=season_id),
-			title = title
-		))
+		season = RE_SECTION_TITLE.search(section['title'])
 
-		# Just show the most recent season for now. Older videos are not available in the format we want them in.
-		break
+		if season:
+
+			oc.add(DirectoryObject(
+				key = Callback(Episodes, title=title, id=id, season=season.group(1)),
+				title = 'Season %s' % (season.group(1))
+			))
+
+	if len(oc) < 1:
+		oc.header = "No episodes available"
+		oc.message = "There aren't any episodes available for this show"
 
 	return oc
 
 ####################################################################################################
 @route('/video/abc/episodes')
-def Episodes(title, show_id, season):
+def Episodes(title, id, season):
 
 	oc = ObjectContainer(title2=title)
-	html = GetHTML(EPISODES % (show_id, season))
+	json_obj = JSON.ObjectFromURL(SHOW_EPISODES % (id, season), headers=HTTP_HEADERS)
 
-	for episode in html.xpath('//div[contains(@class, "reg_tile")]'):
+	for episode in json_obj['tiles']:
 
-		url = episode.xpath('./div[@class="tile_title"]/a/@href')[0]
-
-		if not '/VDKA' in url and not '/redirect/fep?videoid=VDKA' in url:
-			continue
-
-		if not url.startswith('http://'):
-
-			if '/redirect/' in url:
-				url = 'http://abc.go.com%s' % (url)
-			else:
-				url = 'http://watchabc.go.com%s' % (url)
-
-		if '/watch/this-week/' in url:
-			url = url.replace('abc.go.com', 'abcnews.go.com')
-
-		title = episode.xpath('./div[@class="tile_title"]/a/text()')[0]
-		try: summary = episode.xpath('./div[@class="tile_desc"]/text()')[0]
-		except: summary = ''
-		thumb = episode.xpath('./div[@class="thumb"]/a/img/@src')[0]
-
-		try:
-			air_date = episode.xpath('./div[@class="show_tile_sub"]/text()')[0]
-			date = RE_AIR_DATE.search(air_date).groupdict()
-			air_date = '%s-%s-20%s' % (date['month'], date['day'], date['year'])
-			originally_available_at = Datetime.ParseDate(air_date).date()
-		except:
-			originally_available_at = None
-
-		oc.add(VideoClipObject(
-			url = '%s#%s' % (url, show_id),
-			title = title,
-			summary = summary,
-			thumb = Resource.ContentsOfURLWithFallback(url=thumb)
+		oc.add(EpisodeObject(
+			url = 'abc://%s' % (episode['video']['id']),
+			show = episode['video']['show']['title'],
+			title = episode['video']['title'],
+			summary = episode['video']['longdescription'],
+			duration = episode['video']['duration'],
+			content_rating = episode['video']['tvrating'],
+			originally_available_at = Datetime.ParseDate(episode['video']['airtime']).date(),
+			season = int(episode['video']['seasonnumber']),
+			index = int(episode['video']['episodenumber']),
+			thumb = episode['images'][0]['value']
 		))
 
 	return oc
-
-####################################################################################################
-def GetHTML(url):
-
-	try:
-		html = HTML.ElementFromURL(url, sleep=5.0)
-	except:
-		html = HTML.ElementFromURL(url, cacheTime=0)
-
-	return html
