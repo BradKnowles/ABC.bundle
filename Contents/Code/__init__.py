@@ -28,11 +28,14 @@ def MainMenu():
 
 	for show in json_obj['tiles']:
 
+		if not 'show' in show:
+			continue
+
+		if not 'id' in show['show'] or show['show']['id'] in ['', None]:
+			continue
+
+		id = show['show']['id']
 		title = show['title']
-		try:
-			id = show['show']['id']
-		except:
-			id = ""
 		thumb = show['images'][0]['value']
 
 		oc.add(DirectoryObject(
