@@ -29,7 +29,10 @@ def MainMenu():
 	for show in json_obj['tiles']:
 
 		title = show['title']
-		id = show['show']['id']
+		try:
+			id = show['show']['id']
+		except:
+			id = ""
 		thumb = show['images'][0]['value']
 
 		oc.add(DirectoryObject(
