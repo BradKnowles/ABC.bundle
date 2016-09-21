@@ -82,6 +82,9 @@ def Episodes(title, id, season):
 
 	for episode in json_obj['tiles']:
 
+		if 'accesslevel' in episode['video'] and episode['video']['accesslevel'] != "0":
+			continue
+
 		oc.add(EpisodeObject(
 			url = 'abc://%s' % (episode['video']['id']),
 			show = episode['video']['show']['title'],
