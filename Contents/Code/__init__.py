@@ -2,7 +2,7 @@ NAME = 'ABC'
 ART = 'art-default.jpg'
 ICON = 'icon-default.jpg'
 
-ALL_SHOWS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1389461?brand=001&device=002&start=0&size=100'
+ALL_SHOWS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1389461?brand=001&device=002&start=0&size=200'
 SHOW_SEASONS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/layout?brand=001&device=002&type=show&show=%s'
 SHOW_EPISODES = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1925878?brand=001&device=002&show=%s&season=%s&start=0&size=50'
 
