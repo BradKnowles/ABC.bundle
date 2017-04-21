@@ -1,3 +1,5 @@
+import ssl, urllib2
+
 NAME = 'ABC'
 ART = 'art-default.jpg'
 ICON = 'icon-default.jpg'
@@ -24,7 +26,7 @@ def Start():
 def MainMenu():
 
 	oc = ObjectContainer()
-	json_obj = JSON.ObjectFromURL(ALL_SHOWS, headers=HTTP_HEADERS)
+	json_obj = JSON.ObjectFromString(GetData(ALL_SHOWS))
 
 	for show in json_obj['tiles']:
 
@@ -51,7 +53,7 @@ def MainMenu():
 def Season(title, id):
 
 	oc = ObjectContainer(title2=title)
-	json_obj = JSON.ObjectFromURL(SHOW_SEASONS % (id), headers=HTTP_HEADERS)
+	json_obj = JSON.ObjectFromString(GetData(SHOW_SEASONS % (id)))
 
 	for section in json_obj['modules']:
 
@@ -78,7 +80,7 @@ def Season(title, id):
 def Episodes(title, id, season):
 
 	oc = ObjectContainer(title2=title)
-	json_obj = JSON.ObjectFromURL(SHOW_EPISODES % (id, season), headers=HTTP_HEADERS)
+	json_obj = JSON.ObjectFromString(GetData(SHOW_EPISODES % (id, season)))
 
 	for episode in json_obj['tiles']:
 
@@ -99,3 +101,19 @@ def Episodes(title, id, season):
 		))
 
 	return oc
+
+####################################################################################################
+@route('/video/abc/getdata')
+def GetData(url):
+
+	# Quick and dirty workaround to get this to work on Windows
+	# Do not validate ssl certificate
+	# http://stackoverflow.com/questions/27835619/ssl-certificate-verify-failed-error
+	if 'Windows' in Platform.OS:
+		req = urllib2.Request(url, headers=HTTP_HEADERS)
+		ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+		data = urllib2.urlopen(req, context=ssl_context).read()
+	else:
+		data = HTTP.Request(url, headers=HTTP_HEADERS).content
+
+	return data
