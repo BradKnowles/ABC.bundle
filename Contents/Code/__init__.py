@@ -20,6 +20,7 @@ def Start():
 
 	ObjectContainer.title1 = NAME
 	HTTP.CacheTime = CACHE_1HOUR
+	HTTP.ClearCache()
 
 ####################################################################################################
 @handler('/video/abc', NAME, art=ART, thumb=ICON)
@@ -99,6 +100,10 @@ def Episodes(title, id, season):
 			index = int(episode['video']['episodenumber']),
 			thumb = episode['images'][0]['value']
 		))
+
+	if len(oc) < 1:
+		oc.header = "No episodes available"
+		oc.message = "There aren't any episodes available for this season"
 
 	return oc
 
