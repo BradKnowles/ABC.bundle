@@ -39,7 +39,7 @@ def MainMenu():
 
 		id = show['show']['id']
 		title = show['title']
-		thumb = show['images'][0]['value']
+		thumb = show['images'][0]['value'] if 'images' in show else ''
 
 		oc.add(DirectoryObject(
 			key = Callback(Season, title=title, id=id),
