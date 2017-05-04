@@ -9,8 +9,8 @@ SHOW_SEASONS = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/layout?brand=0
 SHOW_EPISODES = 'https://api.pluto.watchabc.go.com/api/ws/pluto/v1/module/tilegroup/1925878?brand=001&device=002&show=%s&season=%s&start=0&size=50'
 
 HTTP_HEADERS = {
-	'User-Agent': 'ABC/5.0.3(iPad4,4; cpu iPhone OS 9_3_4 like mac os x; en-nl) CFNetwork/758.5.3 Darwin/15.6.0',
-	'appversion': '5.0.0'
+	'User-Agent': 'ABC/5.0.14(iPad4,4; cpu iOS 10_2_1 like mac os x; en_nl) CFNetwork/758.5.3 Darwin/15.6.0',
+	'appversion': '5.0.14'
 }
 
 RE_SECTION_TITLE = Regex('^season (\d+)$', Regex.IGNORECASE)
