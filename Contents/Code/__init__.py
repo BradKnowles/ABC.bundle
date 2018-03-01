@@ -123,14 +123,11 @@ def Episodes(title, id, season):
 @route('/video/abc/getdata')
 def GetData(url):
 
-	# Quick and dirty workaround to get this to work on Windows
+	# Quick and dirty workaround
 	# Do not validate ssl certificate
 	# http://stackoverflow.com/questions/27835619/ssl-certificate-verify-failed-error
-	if 'Windows' in Platform.OS:
-		req = urllib2.Request(url, headers=HTTP_HEADERS)
-		ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-		data = urllib2.urlopen(req, context=ssl_context).read()
-	else:
-		data = HTTP.Request(url, headers=HTTP_HEADERS).content
+	req = urllib2.Request(url, headers=HTTP_HEADERS)
+	ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+	data = urllib2.urlopen(req, context=ssl_context).read()
 
 	return data
